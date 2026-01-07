@@ -33,7 +33,7 @@
  */
 
 // Main client
-export { WisprClient } from './core/client';
+export { WisprClient, type WisprClientOptions } from './core/client';
 
 // Authentication
 export {
@@ -44,6 +44,7 @@ export {
   type AuthSession,
   type SupabaseSession,
   type SupabaseUser,
+  type WisprAuthOptions,
   type WisprSignInResponse,
   type UserStatus,
 } from './core/auth';

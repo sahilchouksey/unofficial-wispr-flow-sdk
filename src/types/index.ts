@@ -15,6 +15,8 @@ export const WisprConfigSchema = z.object({
   apiBaseUrl: z.string().url().optional(),
   /** Optional custom Baseten URL */
   basetenUrl: z.string().url().optional(),
+  /** Optional client version to report (uses default if not provided) */
+  clientVersion: z.string().optional(),
   /** Request timeout in milliseconds */
   timeout: z.number().positive().optional().default(30000),
   /** Enable debug logging */

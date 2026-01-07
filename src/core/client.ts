@@ -74,6 +74,7 @@ export class WisprClient {
   private readonly apiBaseUrl: string;
   private readonly basetenUrl: string;
   private readonly basetenApiKey: string;
+  private readonly clientVersion: string;
   private readonly auth?: WisprAuth;
   private readonly tokenRefreshBuffer: number;
 
@@ -107,6 +108,7 @@ export class WisprClient {
       basetenApiKey: options.basetenApiKey,
       apiBaseUrl: options.apiBaseUrl,
       basetenUrl: options.basetenUrl,
+      clientVersion: options.clientVersion,
       timeout: options.timeout,
       debug: options.debug,
     });
@@ -120,11 +122,13 @@ export class WisprClient {
     this.apiBaseUrl = this.config.apiBaseUrl ?? WISPR_API_BASE_URL;
     this.basetenUrl = this.config.basetenUrl ?? BASETEN_API_URL;
     this.basetenApiKey = this.config.basetenApiKey ?? DEFAULT_BASETEN_API_KEY;
+    this.clientVersion = this.config.clientVersion ?? DEFAULT_CLIENT_VERSION;
     this.tokenRefreshBuffer = options.tokenRefreshBuffer ?? 60;
 
     this.logger.debug('WisprClient initialized', {
       apiBaseUrl: this.apiBaseUrl,
       basetenUrl: this.basetenUrl,
+      clientVersion: this.clientVersion,
       userUuid: this.config.userUuid,
       autoRefresh: !!this.auth,
     });
@@ -282,7 +286,7 @@ export class WisprClient {
           session_id: request.metadata?.session_id ?? sessionId,
           environment: request.metadata?.environment ?? 'production',
           client_platform: request.metadata?.client_platform ?? 'android',
-          client_version: request.metadata?.client_version ?? DEFAULT_CLIENT_VERSION,
+          client_version: request.metadata?.client_version ?? this.clientVersion,
           transcript_entity_uuid: request.metadata?.transcript_entity_uuid ?? transcriptEntityUuid,
         },
         // Audio data - base64 encoded WAV (16kHz mono PCM)
@@ -349,6 +353,7 @@ export class WisprClient {
       userUuid: this.config.userUuid,
       apiBaseUrl: this.config.apiBaseUrl,
       basetenUrl: this.config.basetenUrl,
+      clientVersion: this.config.clientVersion,
       timeout: this.config.timeout,
       debug: this.config.debug,
     };

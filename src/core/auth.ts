@@ -92,6 +92,18 @@ export interface AuthSession {
   lastName?: string;
 }
 
+/**
+ * Configuration options for WisprAuth
+ */
+export interface WisprAuthOptions {
+  /** Custom Supabase URL (uses SUPABASE_URL env var if not provided) */
+  supabaseUrl?: string;
+  /** Custom Supabase anonymous key (uses SUPABASE_ANON_KEY env var if not provided) */
+  supabaseAnonKey?: string;
+  /** Custom Wispr API URL (uses WISPR_API_URL env var if not provided) */
+  wisprApiUrl?: string;
+}
+
 // ============================================================================
 // Auth Client
 // ============================================================================
@@ -127,7 +139,7 @@ export class WisprAuth {
   private readonly wisprApiUrl: string;
   private currentSession: AuthSession | null = null;
 
-  constructor(options?: { supabaseUrl?: string; supabaseAnonKey?: string; wisprApiUrl?: string }) {
+  constructor(options?: WisprAuthOptions) {
     this.supabaseUrl = options?.supabaseUrl ?? SUPABASE_URL;
     this.supabaseAnonKey = options?.supabaseAnonKey ?? SUPABASE_ANON_KEY;
     this.wisprApiUrl = options?.wisprApiUrl ?? WISPR_API_URL;
@@ -423,10 +435,6 @@ export class WisprAuth {
 /**
  * Create a new auth client instance
  */
-export function createAuth(options?: {
-  supabaseUrl?: string;
-  supabaseAnonKey?: string;
-  wisprApiUrl?: string;
-}): WisprAuth {
+export function createAuth(options?: WisprAuthOptions): WisprAuth {
   return new WisprAuth(options);
 }
