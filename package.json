@@ -1,5 +1,5 @@
 {
-  "name": "unofficial-wispr-flow-sdk",
+  "name": "wispr-flow-sdk-unofficial",
   "version": "0.1.0",
   "description": "Unofficial TypeScript SDK for Wispr Flow voice-to-text API. Not affiliated with Wispr Inc.",
   "main": "dist/index.js",
