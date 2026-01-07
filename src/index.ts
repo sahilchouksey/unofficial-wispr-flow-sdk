@@ -1,21 +1,20 @@
 /**
  * Wispr Flow SDK - Unofficial TypeScript SDK for Wispr Flow voice-to-text API
  *
+ * All configuration must be passed explicitly - no environment variables are read.
+ *
  * @example
  * ```typescript
- * import { WisprAuth, WisprClient } from 'wispr-flow-sdk';
+ * import { WisprClient } from 'wispr-flow-sdk';
  *
- * // Authenticate
- * const auth = new WisprAuth();
- * const session = await auth.signIn({
+ * // Create client with all config in one place
+ * const client = await WisprClient.create({
  *   email: 'user@example.com',
  *   password: 'password123',
- * });
- *
- * // Create client with session
- * const client = new WisprClient({
- *   accessToken: session.accessToken,
- *   userUuid: session.userUuid,
+ *   supabaseUrl: 'https://xxx.supabase.co',
+ *   supabaseAnonKey: 'your-anon-key',
+ *   basetenUrl: 'https://xxx.api.baseten.co',
+ *   basetenApiKey: 'your-baseten-key',
  * });
  *
  * // Warmup the service (reduces latency)
@@ -33,13 +32,12 @@
  */
 
 // Main client
-export { WisprClient, type WisprClientOptions } from './core/client';
+export { WisprClient, type WisprClientOptions, type WisprFlowConfig } from './core/client';
 
 // Authentication
 export {
   WisprAuth,
   createAuth,
-  SUPABASE_ANON_KEY,
   type AuthCredentials,
   type AuthSession,
   type SupabaseSession,
@@ -52,14 +50,11 @@ export {
 // Constants
 export {
   AUDIO_CONFIG,
-  BASETEN_API_URL,
-  DEFAULT_BASETEN_API_KEY,
+  DEFAULT_API_BASE_URL,
   DEFAULT_CLIENT_VERSION,
   DEFAULT_TIMEOUT_MS,
   ENDPOINTS,
   SUPPORTED_LANGUAGES,
-  SUPABASE_URL,
-  WISPR_API_BASE_URL,
   type SupportedLanguage,
 } from './core/constants';
 

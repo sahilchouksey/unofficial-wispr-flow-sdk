@@ -2,39 +2,37 @@
  * Example 01: Basic Authentication
  *
  * This example demonstrates how to:
- * 1. Check if a user exists
- * 2. Sign in with email/password
- * 3. Create a WisprClient with the session
- * 4. Warmup the transcription service
+ * 1. Create a WisprClient with all config in one place
+ * 2. Warmup the transcription service
  *
  * Usage:
  *   bun run examples/01-basic-auth.ts
  *
- * Environment variables:
- *   WISPR_EMAIL - Your Wispr Flow email
- *   WISPR_PASSWORD - Your Wispr Flow password
+ * Required: Set environment variables or pass directly to the SDK
  */
 
-import { WisprAuth, WisprClient } from '../src';
+import { WisprClient } from '../src';
 
-// Get credentials from environment
-function getCredentials(): { email: string; password: string } {
+// Get configuration from environment (for this example)
+// In production, you can pass these values directly
+function getConfig() {
   const email = process.env.WISPR_EMAIL;
   const password = process.env.WISPR_PASSWORD;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const basetenUrl = process.env.BASETEN_URL;
+  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-  if (!email || !password) {
-    console.error('Error: Please set WISPR_EMAIL and WISPR_PASSWORD environment variables');
-    console.error('');
-    console.error('Example:');
-    console.error('  export WISPR_EMAIL="your-email@example.com"');
-    console.error('  export WISPR_PASSWORD="your-password"');
+  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
+    console.error('Error: Please set required environment variables:');
+    console.error('  WISPR_EMAIL, WISPR_PASSWORD');
+    console.error('  SUPABASE_URL, SUPABASE_ANON_KEY');
+    console.error('  BASETEN_URL, BASETEN_API_KEY');
     process.exit(1);
   }
 
-  return { email, password };
+  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
 }
-
-const { email, password } = getCredentials();
 
 async function main() {
   console.log('='.repeat(50));
@@ -42,43 +40,32 @@ async function main() {
   console.log('='.repeat(50));
   console.log('');
 
-  // Step 1: Create auth instance
-  console.log('1. Creating WisprAuth instance...');
-  const auth = new WisprAuth();
+  const config = getConfig();
 
-  // Step 2: Check if user exists
-  console.log('');
-  console.log('2. Checking if user exists...');
-  const userStatus = await auth.checkUserStatus(email);
-  console.log('   User status:', userStatus);
-
-  if (!userStatus.exists) {
-    console.error('   Error: User does not exist. Please sign up at https://wisprflow.ai');
-    process.exit(1);
-  }
-
-  // Step 3: Sign in
-  console.log('');
-  console.log('3. Signing in...');
-  const session = await auth.signIn({ email, password });
-  console.log('   Success!');
-  console.log('   User UUID:', session.userUuid);
-  console.log('   Email:', session.email);
-  console.log('   Token expires at:', new Date(session.expiresAt * 1000).toISOString());
-
-  // Step 4: Create client with session
-  console.log('');
-  console.log('4. Creating WisprClient...');
-  const client = new WisprClient({
-    accessToken: session.accessToken,
-    userUuid: session.userUuid,
+  // Step 1: Create client with all config in one place
+  console.log('1. Creating WisprClient with unified config...');
+  const client = await WisprClient.create({
+    email: config.email,
+    password: config.password,
+    supabaseUrl: config.supabaseUrl,
+    supabaseAnonKey: config.supabaseAnonKey,
+    basetenUrl: config.basetenUrl,
+    basetenApiKey: config.basetenApiKey,
     debug: true,
   });
-  console.log('   Client created successfully!');
+  console.log('   Client created and authenticated successfully!');
 
-  // Step 5: Warmup the service
+  // Step 2: Get client config (without sensitive data)
   console.log('');
-  console.log('5. Warming up transcription service...');
+  console.log('2. Client configuration:');
+  const clientConfig = client.getConfig();
+  console.log('   User UUID:', clientConfig.userUuid);
+  console.log('   API Base URL:', clientConfig.apiBaseUrl);
+  console.log('   Client Version:', clientConfig.clientVersion);
+
+  // Step 3: Warmup the service
+  console.log('');
+  console.log('3. Warming up transcription service...');
   const warmupResponse = await client.warmup();
   console.log('   Warmup status:', warmupResponse.status);
 
@@ -87,9 +74,6 @@ async function main() {
   console.log('='.repeat(50));
   console.log('Authentication complete! You can now use the client to transcribe audio.');
   console.log('='.repeat(50));
-
-  // Optional: Sign out when done
-  // auth.signOut();
 }
 
 main().catch((error) => {

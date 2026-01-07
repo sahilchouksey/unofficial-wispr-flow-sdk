@@ -33,6 +33,7 @@ Unofficial TypeScript SDK for the Wispr Flow voice-to-text API.
 - TypeScript with full type safety (Zod schemas)
 - Multiple language support
 - Context-aware transcription (app context, dictionary, OCR)
+- **No environment variables required** - pass all config via SDK interface
 
 ---
 
@@ -40,57 +41,47 @@ Unofficial TypeScript SDK for the Wispr Flow voice-to-text API.
 
 ```bash
 # Using bun
-bun add unofficial-wispr-flow-sdk
+bun add wispr-flow-sdk-unofficial
 
 # Using npm
-npm install unofficial-wispr-flow-sdk
+npm install wispr-flow-sdk-unofficial
 
 # Using pnpm
-pnpm add unofficial-wispr-flow-sdk
-```
-
----
-
-## Environment Setup
-
-This SDK requires environment variables for API configuration. Create a `.env` file:
-
-```bash
-# Required - User credentials
-WISPR_EMAIL=your-email@example.com
-WISPR_PASSWORD=your-password
-
-# Required - API configuration (obtain these values separately)
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-BASETEN_URL=
-BASETEN_API_KEY=
-
-# Optional
-WISPR_API_URL=https://api.wisprflow.ai
+pnpm add wispr-flow-sdk-unofficial
 ```
 
 ---
 
 ## Quick Start
 
-```typescript
-import { WisprAuth, WisprClient } from 'unofficial-wispr-flow-sdk';
+All configuration is passed directly to the SDK - no `.env` file needed:
 
-// 1. Authenticate
-const auth = new WisprAuth();
-const session = await auth.signIn({
-  email: process.env.WISPR_EMAIL,
-  password: process.env.WISPR_PASSWORD,
+```typescript
+import { WisprClient } from 'wispr-flow-sdk-unofficial';
+
+// Create client with all config in one place
+const client = await WisprClient.create({
+  // Required: Authentication
+  email: 'user@example.com',
+  password: 'password123',
+  
+  // Required: API Configuration
+  supabaseUrl: 'https://xxx.supabase.co',
+  supabaseAnonKey: 'your-supabase-anon-key',
+  basetenUrl: 'https://xxx.api.baseten.co',
+  basetenApiKey: 'your-baseten-api-key',
+  
+  // Optional settings
+  apiBaseUrl: 'https://api.wisprflow.ai',  // default
+  clientVersion: '1.4.154',                 // default
+  timeout: 30000,                           // default (ms)
+  debug: false,                             // default
 });
 
-// 2. Create client with auto-refresh
-const client = new WisprClient({ auth });
-
-// 3. Warmup the service (reduces latency)
+// Warmup the service (reduces latency)
 await client.warmup();
 
-// 4. Transcribe audio (base64 encoded WAV, 16kHz mono)
+// Transcribe audio (base64 encoded WAV, 16kHz mono)
 const result = await client.transcribe({
   audioData: base64AudioData,
   languages: ['en'],
@@ -102,63 +93,21 @@ console.log(result.llm_text || result.asr_text);
 
 ---
 
-## Authentication
+## Configuration Options
 
-The SDK supports authentication via Supabase. You can sign in with email/password:
-
-```typescript
-import { WisprAuth } from 'unofficial-wispr-flow-sdk';
-
-const auth = new WisprAuth();
-
-// Check if user exists
-const status = await auth.checkUserStatus('user@example.com');
-console.log(status); // { exists: true, provider: 'email', verified: true }
-
-// Sign in
-const session = await auth.signIn({
-  email: 'user@example.com',
-  password: 'password123',
-});
-
-console.log(session.accessToken);  // JWT token
-console.log(session.userUuid);     // User UUID
-console.log(session.expiresAt);    // Token expiry timestamp
-
-// Refresh token manually (or use auto-refresh with WisprClient)
-const newSession = await auth.refreshSession();
-
-// Sign out
-await auth.signOut();
-```
-
----
-
-## Client Options
-
-### Manual Token Management
-
-```typescript
-const client = new WisprClient({
-  accessToken: 'your-jwt-token',
-  userUuid: 'your-user-uuid',
-  timeout: 30000,  // Request timeout in ms (default: 30000)
-  debug: true,     // Enable debug logging
-});
-```
-
-### Automatic Token Refresh
-
-```typescript
-const auth = new WisprAuth();
-await auth.signIn({ email, password });
-
-const client = new WisprClient({
-  auth,                    // Pass auth instance for auto-refresh
-  tokenRefreshBuffer: 300, // Refresh 5 minutes before expiry (default: 60)
-  debug: true,
-});
-```
+| Option | Required | Description |
+|--------|----------|-------------|
+| `email` | Yes | Wispr Flow account email |
+| `password` | Yes | Wispr Flow account password |
+| `supabaseUrl` | Yes | Supabase project URL |
+| `supabaseAnonKey` | Yes | Supabase anonymous key |
+| `basetenUrl` | Yes | Baseten API URL |
+| `basetenApiKey` | Yes | Baseten API key |
+| `apiBaseUrl` | No | Wispr API URL (default: `https://api.wisprflow.ai`) |
+| `clientVersion` | No | Client version to report (default: `1.4.154`) |
+| `timeout` | No | Request timeout in ms (default: `30000`) |
+| `debug` | No | Enable debug logging (default: `false`) |
+| `tokenRefreshBuffer` | No | Seconds before expiry to refresh token (default: `60`) |
 
 ---
 
@@ -237,7 +186,7 @@ ffmpeg -i input.mp3 -ar 16000 -ac 1 -acodec pcm_s16le output.wav
 ### Converting in Code
 
 ```typescript
-import { toBase64 } from 'unofficial-wispr-flow-sdk';
+import { toBase64 } from 'wispr-flow-sdk-unofficial';
 import { readFile } from 'fs/promises';
 
 const audioBuffer = await readFile('audio.wav');
@@ -256,7 +205,7 @@ import {
   WisprApiError,
   WisprValidationError,
   WisprTimeoutError,
-} from 'unofficial-wispr-flow-sdk';
+} from 'wispr-flow-sdk-unofficial';
 
 try {
   await client.transcribe({ audioData });
@@ -271,7 +220,7 @@ try {
     // Request timed out
     console.error('Timeout:', error.message);
   } else if (error instanceof WisprValidationError) {
-    // Invalid input
+    // Invalid input or missing required config
     console.error('Validation error:', error.message);
   }
 }
@@ -294,9 +243,13 @@ See the [examples](./examples) directory for complete usage examples:
 ### Running Examples
 
 ```bash
-# Set up environment variables in .env file first
-cp .env.example .env
-# Edit .env with your credentials
+# Set environment variables (for examples only)
+export WISPR_EMAIL="your-email"
+export WISPR_PASSWORD="your-password"
+export SUPABASE_URL="https://xxx.supabase.co"
+export SUPABASE_ANON_KEY="your-anon-key"
+export BASETEN_URL="https://xxx.api.baseten.co"
+export BASETEN_API_KEY="your-baseten-key"
 
 # Run examples
 bun run examples/01-basic-auth.ts
@@ -307,28 +260,44 @@ bun run examples/03-transcribe-file.ts path/to/audio.wav
 
 ## API Reference
 
-### WisprAuth
-
-| Method | Description |
-|--------|-------------|
-| `signIn(credentials)` | Sign in with email/password |
-| `signInWithSupabase(credentials)` | Sign in via Supabase directly |
-| `signInWithWisprApi(credentials)` | Sign in via Wispr API |
-| `refreshSession()` | Refresh the access token |
-| `signOut()` | Sign out and clear session |
-| `getSession()` | Get current session |
-| `isSessionExpired(buffer?)` | Check if session is expired |
-| `getValidAccessToken()` | Get valid token, refreshing if needed |
-| `checkUserStatus(email)` | Check if user exists |
-
 ### WisprClient
 
 | Method | Description |
 |--------|-------------|
+| `WisprClient.create(config)` | Create authenticated client (recommended) |
 | `warmup()` | Warmup transcription service |
 | `transcribe(request)` | Transcribe audio to text |
 | `getConfig()` | Get client configuration |
 | `updateAccessToken(token)` | Update access token |
+
+### WisprAuth (Advanced Usage)
+
+For advanced use cases, you can use `WisprAuth` directly:
+
+```typescript
+import { WisprAuth, WisprClient } from 'wispr-flow-sdk-unofficial';
+
+const auth = new WisprAuth({
+  supabaseUrl: 'https://xxx.supabase.co',
+  supabaseAnonKey: 'your-anon-key',
+});
+
+await auth.signIn({ email: 'user@example.com', password: 'password' });
+
+const client = new WisprClient({
+  auth,
+  basetenUrl: 'https://xxx.api.baseten.co',
+  basetenApiKey: 'your-baseten-key',
+});
+```
+
+| Method | Description |
+|--------|-------------|
+| `signIn(credentials)` | Sign in with email/password |
+| `refreshSession()` | Refresh the access token |
+| `signOut()` | Sign out and clear session |
+| `getSession()` | Get current session |
+| `isSessionExpired(buffer?)` | Check if session is expired |
 
 ---
 
@@ -337,10 +306,6 @@ bun run examples/03-transcribe-file.ts path/to/audio.wav
 ```bash
 # Install dependencies
 bun install
-
-# Set up environment
-cp .env.example .env
-# Edit .env with your values
 
 # Run type check
 bun run typecheck

@@ -8,35 +8,54 @@
  *   bun run examples/05-microphone-browser/server.ts
  *   Open http://localhost:3001 in your browser
  *
- * Environment variables:
- *   WISPR_EMAIL - Your Wispr Flow email
- *   WISPR_PASSWORD - Your Wispr Flow password
+ * Required environment variables:
+ *   WISPR_EMAIL, WISPR_PASSWORD
+ *   SUPABASE_URL, SUPABASE_ANON_KEY
+ *   BASETEN_URL, BASETEN_API_KEY
  */
 
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { WisprAuth, WisprClient } from '../../src';
+import { WisprClient } from '../../src';
 
 const PORT = 3001;
 
-// Get credentials
-const email = process.env.WISPR_EMAIL;
-const password = process.env.WISPR_PASSWORD;
+// Get configuration
+function getConfig() {
+  const email = process.env.WISPR_EMAIL;
+  const password = process.env.WISPR_PASSWORD;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const basetenUrl = process.env.BASETEN_URL;
+  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-if (!email || !password) {
-  console.error('Error: Please set WISPR_EMAIL and WISPR_PASSWORD environment variables');
-  process.exit(1);
+  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
+    console.error('Error: Please set required environment variables:');
+    console.error('  WISPR_EMAIL, WISPR_PASSWORD');
+    console.error('  SUPABASE_URL, SUPABASE_ANON_KEY');
+    console.error('  BASETEN_URL, BASETEN_API_KEY');
+    process.exit(1);
+  }
+
+  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
 }
 
-// Initialize auth and client
-let auth: WisprAuth;
+const config = getConfig();
+
+// Initialize client
 let client: WisprClient;
 
 async function initializeClient() {
   console.log('Initializing Wispr client...');
-  auth = new WisprAuth();
-  await auth.signIn({ email: email!, password: password! });
-  client = new WisprClient({ auth, debug: true });
+  client = await WisprClient.create({
+    email: config.email,
+    password: config.password,
+    supabaseUrl: config.supabaseUrl,
+    supabaseAnonKey: config.supabaseAnonKey,
+    basetenUrl: config.basetenUrl,
+    basetenApiKey: config.basetenApiKey,
+    debug: true,
+  });
   await client.warmup();
   console.log('Client ready!');
 }

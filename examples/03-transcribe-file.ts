@@ -17,25 +17,25 @@
  *
  * Convert with ffmpeg:
  *   ffmpeg -i input.mp3 -ar 16000 -ac 1 -acodec pcm_s16le output.wav
- *
- * Environment variables:
- *   WISPR_EMAIL - Your Wispr Flow email
- *   WISPR_PASSWORD - Your Wispr Flow password
  */
 
 import { readFile } from 'node:fs/promises';
-import { WisprAuth, WisprClient, toBase64 } from '../src';
+import { WisprClient, toBase64 } from '../src';
 
-function getCredentials(): { email: string; password: string } {
+function getConfig() {
   const email = process.env.WISPR_EMAIL;
   const password = process.env.WISPR_PASSWORD;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const basetenUrl = process.env.BASETEN_URL;
+  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-  if (!email || !password) {
-    console.error('Error: Please set WISPR_EMAIL and WISPR_PASSWORD environment variables');
+  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
+    console.error('Error: Please set required environment variables');
     process.exit(1);
   }
 
-  return { email, password };
+  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
 }
 
 async function main() {
@@ -50,7 +50,7 @@ async function main() {
     process.exit(1);
   }
 
-  const { email, password } = getCredentials();
+  const config = getConfig();
 
   console.log('='.repeat(50));
   console.log('Wispr Flow SDK - Transcribe Audio File');
@@ -74,27 +74,28 @@ async function main() {
   const base64Audio = toBase64(audioBuffer);
   console.log('   Base64 length:', base64Audio.length, 'chars');
 
-  // Step 3: Sign in
+  // Step 3: Create client
   console.log('');
-  console.log('3. Signing in...');
-  const auth = new WisprAuth();
-  await auth.signIn({ email, password });
-  console.log('   Signed in successfully!');
+  console.log('3. Creating client...');
+  const client = await WisprClient.create({
+    email: config.email,
+    password: config.password,
+    supabaseUrl: config.supabaseUrl,
+    supabaseAnonKey: config.supabaseAnonKey,
+    basetenUrl: config.basetenUrl,
+    basetenApiKey: config.basetenApiKey,
+  });
+  console.log('   Client created!');
 
-  // Step 4: Create client
+  // Step 4: Warmup (optional but recommended)
   console.log('');
-  console.log('4. Creating client...');
-  const client = new WisprClient({ auth });
-
-  // Step 5: Warmup (optional but recommended)
-  console.log('');
-  console.log('5. Warming up service...');
+  console.log('4. Warming up service...');
   await client.warmup();
   console.log('   Service ready!');
 
-  // Step 6: Transcribe
+  // Step 5: Transcribe
   console.log('');
-  console.log('6. Transcribing audio...');
+  console.log('5. Transcribing audio...');
   const startTime = Date.now();
 
   const result = await client.transcribe({
@@ -104,7 +105,7 @@ async function main() {
 
   const elapsed = Date.now() - startTime;
 
-  // Step 7: Display results
+  // Step 6: Display results
   console.log('');
   console.log('='.repeat(50));
   console.log('TRANSCRIPTION RESULT');

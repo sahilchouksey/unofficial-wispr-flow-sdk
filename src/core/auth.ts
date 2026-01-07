@@ -7,13 +7,7 @@
 
 import { z } from 'zod';
 import { WisprAuthError, WisprApiError } from '../types';
-import { SUPABASE_URL, SUPABASE_ANON_KEY, WISPR_API_BASE_URL } from './constants';
-
-// Re-export for convenience
-export { SUPABASE_ANON_KEY } from './constants';
-
-/** Wispr API base URL (local reference) */
-const WISPR_API_URL = WISPR_API_BASE_URL;
+import { DEFAULT_API_BASE_URL } from './constants';
 
 // ============================================================================
 // Types
@@ -94,13 +88,14 @@ export interface AuthSession {
 
 /**
  * Configuration options for WisprAuth
+ * All values must be provided explicitly - no environment variables are read.
  */
 export interface WisprAuthOptions {
-  /** Custom Supabase URL (uses SUPABASE_URL env var if not provided) */
-  supabaseUrl?: string;
-  /** Custom Supabase anonymous key (uses SUPABASE_ANON_KEY env var if not provided) */
-  supabaseAnonKey?: string;
-  /** Custom Wispr API URL (uses WISPR_API_URL env var if not provided) */
+  /** Supabase URL (required) */
+  supabaseUrl: string;
+  /** Supabase anonymous key (required) */
+  supabaseAnonKey: string;
+  /** Wispr API URL (optional, defaults to https://api.wisprflow.ai) */
   wisprApiUrl?: string;
 }
 
@@ -112,10 +107,14 @@ export interface WisprAuthOptions {
  * Wispr Flow Authentication Client
  *
  * Provides methods to authenticate users and manage sessions.
+ * All configuration must be passed explicitly - no environment variables are read.
  *
  * @example
  * ```typescript
- * const auth = new WisprAuth();
+ * const auth = new WisprAuth({
+ *   supabaseUrl: 'https://your-project.supabase.co',
+ *   supabaseAnonKey: 'your-anon-key',
+ * });
  *
  * // Sign in with email/password
  * const session = await auth.signIn({
@@ -125,12 +124,6 @@ export interface WisprAuthOptions {
  *
  * console.log('Access token:', session.accessToken);
  * console.log('User ID:', session.userUuid);
- *
- * // Use session with WisprClient
- * const client = new WisprClient({
- *   accessToken: session.accessToken,
- *   userUuid: session.userUuid,
- * });
  * ```
  */
 export class WisprAuth {
@@ -139,10 +132,17 @@ export class WisprAuth {
   private readonly wisprApiUrl: string;
   private currentSession: AuthSession | null = null;
 
-  constructor(options?: WisprAuthOptions) {
-    this.supabaseUrl = options?.supabaseUrl ?? SUPABASE_URL;
-    this.supabaseAnonKey = options?.supabaseAnonKey ?? SUPABASE_ANON_KEY;
-    this.wisprApiUrl = options?.wisprApiUrl ?? WISPR_API_URL;
+  constructor(options: WisprAuthOptions) {
+    if (!options.supabaseUrl) {
+      throw new WisprAuthError('supabaseUrl is required');
+    }
+    if (!options.supabaseAnonKey) {
+      throw new WisprAuthError('supabaseAnonKey is required');
+    }
+
+    this.supabaseUrl = options.supabaseUrl;
+    this.supabaseAnonKey = options.supabaseAnonKey;
+    this.wisprApiUrl = options.wisprApiUrl ?? DEFAULT_API_BASE_URL;
   }
 
   /**
@@ -435,6 +435,6 @@ export class WisprAuth {
 /**
  * Create a new auth client instance
  */
-export function createAuth(options?: WisprAuthOptions): WisprAuth {
+export function createAuth(options: WisprAuthOptions): WisprAuth {
   return new WisprAuth(options);
 }

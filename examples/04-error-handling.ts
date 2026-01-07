@@ -6,14 +6,9 @@
  *
  * Usage:
  *   bun run examples/04-error-handling.ts
- *
- * Environment variables:
- *   WISPR_EMAIL - Your Wispr Flow email
- *   WISPR_PASSWORD - Your Wispr Flow password
  */
 
 import {
-  WisprAuth,
   WisprClient,
   WisprAuthError,
   WisprApiError,
@@ -22,27 +17,29 @@ import {
   WisprError,
 } from '../src';
 
-function getCredentials(): { email: string; password: string } {
+function getConfig() {
   const email = process.env.WISPR_EMAIL;
   const password = process.env.WISPR_PASSWORD;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const basetenUrl = process.env.BASETEN_URL;
+  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-  if (!email || !password) {
-    console.error('Error: Please set WISPR_EMAIL and WISPR_PASSWORD environment variables');
+  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
+    console.error('Error: Please set required environment variables');
     process.exit(1);
   }
 
-  return { email, password };
+  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
 }
 
 async function main() {
-  const { email, password } = getCredentials();
+  const config = getConfig();
 
   console.log('='.repeat(50));
   console.log('Wispr Flow SDK - Error Handling Example');
   console.log('='.repeat(50));
   console.log('');
-
-  const auth = new WisprAuth();
 
   // ========================================
   // Example 1: Handle authentication errors
@@ -53,22 +50,18 @@ async function main() {
   // Try with wrong password
   console.log('   a) Wrong password:');
   try {
-    await auth.signIn({ email, password: 'wrong-password' });
+    await WisprClient.create({
+      email: config.email,
+      password: 'wrong-password',
+      supabaseUrl: config.supabaseUrl,
+      supabaseAnonKey: config.supabaseAnonKey,
+      basetenUrl: config.basetenUrl,
+      basetenApiKey: config.basetenApiKey,
+    });
   } catch (error) {
     if (error instanceof WisprAuthError) {
       console.log('      Caught WisprAuthError:', error.message);
       console.log('      Code:', error.code);
-    }
-  }
-
-  // Try with non-existent user
-  console.log('');
-  console.log('   b) Non-existent user:');
-  try {
-    await auth.signIn({ email: 'nonexistent@example.com', password: 'password' });
-  } catch (error) {
-    if (error instanceof WisprAuthError) {
-      console.log('      Caught WisprAuthError:', error.message);
     }
   }
 
@@ -79,23 +72,16 @@ async function main() {
   console.log('2. Handling validation errors...');
   console.log('');
 
-  // Try creating client without auth
-  console.log('   a) Missing credentials:');
+  // Try creating client without required fields
+  console.log('   a) Missing required config:');
   try {
-    new WisprClient({} as { accessToken: string; userUuid: string });
-  } catch (error) {
-    if (error instanceof WisprValidationError) {
-      console.log('      Caught WisprValidationError:', error.message);
-    }
-  }
-
-  // Try creating client with invalid UUID
-  console.log('');
-  console.log('   b) Invalid UUID format:');
-  try {
-    new WisprClient({
-      accessToken: 'some-token',
-      userUuid: 'not-a-valid-uuid',
+    await WisprClient.create({
+      email: config.email,
+      password: config.password,
+      supabaseUrl: config.supabaseUrl,
+      supabaseAnonKey: config.supabaseAnonKey,
+      basetenUrl: '', // Missing!
+      basetenApiKey: config.basetenApiKey,
     });
   } catch (error) {
     if (error instanceof WisprValidationError) {
@@ -113,13 +99,16 @@ async function main() {
   let client: WisprClient | null = null;
 
   try {
-    // Sign in
-    await auth.signIn({ email, password });
-    console.log('   Signed in successfully!');
-
-    // Create client
-    client = new WisprClient({ auth });
-    console.log('   Client created!');
+    // Create client with all config
+    client = await WisprClient.create({
+      email: config.email,
+      password: config.password,
+      supabaseUrl: config.supabaseUrl,
+      supabaseAnonKey: config.supabaseAnonKey,
+      basetenUrl: config.basetenUrl,
+      basetenApiKey: config.basetenApiKey,
+    });
+    console.log('   Client created successfully!');
 
     // Warmup
     await client.warmup();

@@ -1,36 +1,15 @@
 /**
- * Default API endpoints and configuration
+ * Default API endpoints and configuration constants
  *
- * All sensitive values are loaded from environment variables.
- * Set these in your .env file or environment.
+ * These are static defaults. All configuration values must be passed
+ * explicitly through the SDK interface - no environment variables are read.
  */
 
-/** Get environment variable with fallback */
-const getEnv = (key: string, fallback = ''): string => {
-  // Works in Node.js, Bun, and bundlers that support process.env
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env[key] || fallback;
-  }
-  return fallback;
-};
-
-/** Wispr Flow API base URL */
-export const WISPR_API_BASE_URL = getEnv('WISPR_API_URL', 'https://api.wisprflow.ai');
-
-/** Baseten transcription API URL */
-export const BASETEN_API_URL = getEnv('BASETEN_URL');
-
-/** Default Baseten API key */
-export const DEFAULT_BASETEN_API_KEY = getEnv('BASETEN_API_KEY');
-
-/** Supabase instance URL for authentication */
-export const SUPABASE_URL = getEnv('SUPABASE_URL');
-
-/** Supabase anonymous key */
-export const SUPABASE_ANON_KEY = getEnv('SUPABASE_ANON_KEY');
+/** Default Wispr Flow API base URL */
+export const DEFAULT_API_BASE_URL = 'https://api.wisprflow.ai';
 
 /** Default client version to report */
-export const DEFAULT_CLIENT_VERSION = getEnv('WISPR_CLIENT_VERSION', '1.4.154');
+export const DEFAULT_CLIENT_VERSION = '1.4.154';
 
 /** Default request timeout in milliseconds */
 export const DEFAULT_TIMEOUT_MS = 30000;
@@ -95,17 +74,3 @@ export const SUPPORTED_LANGUAGES = [
 ] as const;
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
-
-/**
- * Validate that required environment variables are set
- */
-export function validateEnvConfig(): { valid: boolean; missing: string[] } {
-  const required = ['BASETEN_URL', 'BASETEN_API_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-
-  const missing = required.filter((key) => !getEnv(key));
-
-  return {
-    valid: missing.length === 0,
-    missing,
-  };
-}
