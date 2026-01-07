@@ -1,0 +1,66 @@
+{
+  "name": "unofficial-wispr-flow-sdk",
+  "version": "0.1.0",
+  "description": "Unofficial TypeScript SDK for Wispr Flow voice-to-text API. Not affiliated with Wispr Inc.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "dev": "bun --watch src/index.ts",
+    "lint": "bunx @biomejs/biome lint src",
+    "lint:fix": "bunx @biomejs/biome lint src --write",
+    "format": "bunx @biomejs/biome format src --write",
+    "check": "bunx @biomejs/biome check src",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build && bun run build:types"
+  },
+  "keywords": [
+    "wispr",
+    "wispr-flow",
+    "voice-to-text",
+    "speech-to-text",
+    "transcription",
+    "dictation",
+    "sdk",
+    "typescript",
+    "unofficial"
+  ],
+  "author": "Sahil Chouksey",
+  "license": "MIT",
+  "homepage": "https://github.com/sahilchouksey/unofficial-wispr-flow-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/sahilchouksey/unofficial-wispr-flow-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sahilchouksey/unofficial-wispr-flow-sdk.git"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/bun": "^1.1.14",
+    "@types/ws": "8.18.1",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "wav-decoder": "1.3.0",
+    "ws": "8.19.0",
+    "zod": "^3.24.1"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}
