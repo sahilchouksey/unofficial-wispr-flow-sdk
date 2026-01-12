@@ -32,7 +32,6 @@ Unofficial TypeScript SDK for the Wispr Flow voice-to-text API.
 - Voice-to-text transcription with the Wispr Flow pipeline
 - TypeScript with full type safety (Zod schemas)
 - Multiple language support
-- Context-aware transcription (app context, dictionary, OCR)
 - **No environment variables required** - pass all config via SDK interface
 
 ---
