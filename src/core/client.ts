@@ -6,21 +6,22 @@ import {
   TranscriptionResponseSchema,
   type WarmupResponse,
   WarmupResponseSchema,
-  type WisprConfig,
-  WisprConfigSchema,
   WisprApiError,
   WisprAuthError,
+  type WisprConfig,
+  WisprConfigSchema,
   WisprTimeoutError,
   WisprValidationError,
 } from '../types';
-import { createLogger, createTimeoutSignal, generateUuid, type Logger } from '../utils';
+import { type Logger, createLogger, createTimeoutSignal, generateUuid } from '../utils';
+import { WisprAuth } from './auth';
 import {
   DEFAULT_API_BASE_URL,
   DEFAULT_CLIENT_VERSION,
   DEFAULT_TIMEOUT_MS,
   ENDPOINTS,
+  WISPR_INFRASTRUCTURE,
 } from './constants';
-import { WisprAuth } from './auth';
 
 /**
  * Configuration options for WisprClient (advanced usage)
@@ -38,34 +39,35 @@ export interface WisprClientOptions extends Partial<WisprConfig> {
 }
 
 /**
- * Unified configuration for creating WisprClient with credentials
- * Pass all configuration in one place - no .env file needed!
+ * Simplified configuration for creating WisprClient
  *
- * All configuration values must be provided explicitly.
+ * Only email and password are required! Infrastructure values are
+ * automatically configured using the same values as the official
+ * Wispr Flow desktop app.
+ *
+ * @example
+ * ```typescript
+ * const client = await WisprClient.create({
+ *   email: 'user@example.com',
+ *   password: 'your-password',
+ * });
+ * ```
  */
 export interface WisprFlowConfig {
   /** Wispr Flow email for authentication (required) */
   email: string;
   /** Wispr Flow password for authentication (required) */
   password: string;
-  /** Supabase URL (required) */
-  supabaseUrl: string;
-  /** Supabase anonymous key (required) */
-  supabaseAnonKey: string;
-  /** Baseten API URL (required) */
-  basetenUrl: string;
-  /** Baseten API key (required) */
-  basetenApiKey: string;
-  /** Wispr API base URL (optional, defaults to https://api.wisprflow.ai) */
-  apiBaseUrl?: string;
-  /** Client version to report (optional, defaults to 1.4.154) */
-  clientVersion?: string;
   /** Request timeout in milliseconds (optional, default: 30000) */
   timeout?: number;
   /** Enable debug logging (optional, default: false) */
   debug?: boolean;
   /** Buffer time in seconds before token expiry to trigger refresh (optional, default: 60) */
   tokenRefreshBuffer?: number;
+  /** Wispr API base URL (optional, uses default) */
+  apiBaseUrl?: string;
+  /** Client version to report (optional, uses default) */
+  clientVersion?: string;
 }
 
 /**
@@ -74,18 +76,12 @@ export interface WisprFlowConfig {
  * Provides methods to interact with the unofficial Wispr Flow API
  * for voice-to-text transcription.
  *
- * All configuration must be passed explicitly - no environment variables are read.
- *
  * @example
  * ```typescript
- * // Recommended: Use create() with all config in one place
+ * // Simple usage - just email and password!
  * const client = await WisprClient.create({
  *   email: 'user@example.com',
  *   password: 'password123',
- *   supabaseUrl: 'https://xxx.supabase.co',
- *   supabaseAnonKey: 'your-anon-key',
- *   basetenUrl: 'https://xxx.api.baseten.co',
- *   basetenApiKey: 'your-baseten-key',
  * });
  *
  * await client.warmup();
@@ -403,34 +399,30 @@ export class WisprClient {
   /**
    * Create a WisprClient with email/password authentication
    *
-   * This is the recommended way to create a client - pass all configuration
-   * in one place. No environment variables are read.
+   * This is the recommended way to create a client. Only email and password
+   * are required - all infrastructure values are automatically configured.
    *
    * @example
    * ```typescript
+   * // Simple usage - just email and password!
    * const client = await WisprClient.create({
-   *   // Required credentials
    *   email: 'user@example.com',
    *   password: 'password123',
+   * });
    *
-   *   // Required API configuration
-   *   supabaseUrl: 'https://xxx.supabase.co',
-   *   supabaseAnonKey: 'your-anon-key',
-   *   basetenUrl: 'https://xxx.api.baseten.co',
-   *   basetenApiKey: 'your-baseten-key',
-   *
-   *   // Optional settings
-   *   apiBaseUrl: 'https://api.wisprflow.ai',  // default
-   *   clientVersion: '1.4.154',                 // default
-   *   timeout: 30000,                           // default
-   *   debug: false,                             // default
+   * // With optional settings
+   * const client = await WisprClient.create({
+   *   email: 'user@example.com',
+   *   password: 'password123',
+   *   timeout: 60000,  // 60 second timeout
+   *   debug: true,     // enable debug logging
    * });
    *
    * await client.warmup();
    * const result = await client.transcribe({ audioData: base64Audio });
    * ```
    *
-   * @param config - Unified configuration with credentials
+   * @param config - Configuration with email and password
    * @returns Authenticated WisprClient instance
    */
   static async create(config: WisprFlowConfig): Promise<WisprClient> {
@@ -441,23 +433,11 @@ export class WisprClient {
     if (!config.password) {
       throw new WisprValidationError('password is required', 'Missing password');
     }
-    if (!config.supabaseUrl) {
-      throw new WisprValidationError('supabaseUrl is required', 'Missing supabaseUrl');
-    }
-    if (!config.supabaseAnonKey) {
-      throw new WisprValidationError('supabaseAnonKey is required', 'Missing supabaseAnonKey');
-    }
-    if (!config.basetenUrl) {
-      throw new WisprValidationError('basetenUrl is required', 'Missing basetenUrl');
-    }
-    if (!config.basetenApiKey) {
-      throw new WisprValidationError('basetenApiKey is required', 'Missing basetenApiKey');
-    }
 
-    // Create auth
+    // Create auth using hardcoded infrastructure values
     const auth = new WisprAuth({
-      supabaseUrl: config.supabaseUrl,
-      supabaseAnonKey: config.supabaseAnonKey,
+      supabaseUrl: WISPR_INFRASTRUCTURE.SUPABASE_URL,
+      supabaseAnonKey: WISPR_INFRASTRUCTURE.SUPABASE_ANON_KEY,
       wisprApiUrl: config.apiBaseUrl ?? DEFAULT_API_BASE_URL,
     });
 
@@ -467,12 +447,12 @@ export class WisprClient {
       password: config.password,
     });
 
-    // Create client with auth and all config options
+    // Create client with auth and hardcoded infrastructure values
     return new WisprClient({
       auth,
       apiBaseUrl: config.apiBaseUrl,
-      basetenUrl: config.basetenUrl,
-      basetenApiKey: config.basetenApiKey,
+      basetenUrl: WISPR_INFRASTRUCTURE.BASETEN_URL,
+      basetenApiKey: WISPR_INFRASTRUCTURE.BASETEN_API_KEY,
       clientVersion: config.clientVersion,
       timeout: config.timeout,
       debug: config.debug,

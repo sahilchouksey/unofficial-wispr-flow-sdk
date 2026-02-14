@@ -12,20 +12,16 @@
 
 import { WisprClient } from '../src';
 
-function getConfig() {
+function getCredentials() {
   const email = process.env.WISPR_EMAIL;
   const password = process.env.WISPR_PASSWORD;
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-  const basetenUrl = process.env.BASETEN_URL;
-  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
-    console.error('Error: Please set required environment variables');
+  if (!email || !password) {
+    console.error('Error: Please set WISPR_EMAIL and WISPR_PASSWORD');
     process.exit(1);
   }
 
-  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
+  return { email, password };
 }
 
 async function main() {
@@ -34,17 +30,13 @@ async function main() {
   console.log('='.repeat(50));
   console.log('');
 
-  const config = getConfig();
+  const { email, password } = getCredentials();
 
   // Step 1: Create client with auto-refresh enabled
   console.log('1. Creating WisprClient with auto-refresh...');
   const client = await WisprClient.create({
-    email: config.email,
-    password: config.password,
-    supabaseUrl: config.supabaseUrl,
-    supabaseAnonKey: config.supabaseAnonKey,
-    basetenUrl: config.basetenUrl,
-    basetenApiKey: config.basetenApiKey,
+    email,
+    password,
     tokenRefreshBuffer: 300, // Refresh 5 minutes before expiry
     debug: true,
   });

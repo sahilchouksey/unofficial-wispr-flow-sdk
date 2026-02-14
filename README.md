@@ -2,16 +2,16 @@
 
 Unofficial TypeScript SDK for the Wispr Flow voice-to-text API.
 
-```
-+-------------------+     +--------------------+     +------------------+
-|  Your Application |---->|  Unofficial SDK    |---->|  Wispr Flow API  |
-+-------------------+     +--------------------+     +------------------+
-                                |
-                                v
-                          +-------------+
-                          |  Supabase   |
-                          |  Auth       |
-                          +-------------+
+**Simple to use** - just provide your email and password!
+
+```typescript
+const client = await WisprClient.create({
+  email: 'user@example.com',
+  password: 'your-password',
+});
+
+const result = await client.transcribe({ audioData: base64Audio });
+console.log(result.llm_text); // "Hello world!"
 ```
 
 ---
@@ -27,12 +27,12 @@ Unofficial TypeScript SDK for the Wispr Flow voice-to-text API.
 
 ## Features
 
-- Full authentication support via Supabase (email/password)
-- Automatic token refresh for long-running applications
-- Voice-to-text transcription with the Wispr Flow pipeline
-- TypeScript with full type safety (Zod schemas)
-- Multiple language support
-- **No environment variables required** - pass all config via SDK interface
+- **Simple authentication** - just email and password, no API keys needed
+- **Automatic token refresh** for long-running applications
+- **Voice-to-text transcription** with the Wispr Flow pipeline
+- **TypeScript** with full type safety (Zod schemas)
+- **Multiple language support** (30+ languages)
+- **Context-aware transcription** (app context, dictionary, OCR)
 
 ---
 
@@ -53,28 +53,15 @@ pnpm add wispr-flow-sdk-unofficial
 
 ## Quick Start
 
-All configuration is passed directly to the SDK - no `.env` file needed:
+Just provide your email and password - that's it!
 
 ```typescript
 import { WisprClient } from 'wispr-flow-sdk-unofficial';
 
-// Create client with all config in one place
+// Create client with just email and password!
 const client = await WisprClient.create({
-  // Required: Authentication
   email: 'user@example.com',
   password: 'password123',
-  
-  // Required: API Configuration
-  supabaseUrl: 'https://xxx.supabase.co',
-  supabaseAnonKey: 'your-supabase-anon-key',
-  basetenUrl: 'https://xxx.api.baseten.co',
-  basetenApiKey: 'your-baseten-api-key',
-  
-  // Optional settings
-  apiBaseUrl: 'https://api.wisprflow.ai',  // default
-  clientVersion: '1.4.154',                 // default
-  timeout: 30000,                           // default (ms)
-  debug: false,                             // default
 });
 
 // Warmup the service (reduces latency)
@@ -86,7 +73,7 @@ const result = await client.transcribe({
   languages: ['en'],
 });
 
-// Use llm_text (formatted) or asr_text (raw)
+// Use llm_text (formatted) or asr_text (raw) for the transcribed text
 console.log(result.llm_text || result.asr_text);
 ```
 
@@ -98,12 +85,6 @@ console.log(result.llm_text || result.asr_text);
 |--------|----------|-------------|
 | `email` | Yes | Wispr Flow account email |
 | `password` | Yes | Wispr Flow account password |
-| `supabaseUrl` | Yes | Supabase project URL |
-| `supabaseAnonKey` | Yes | Supabase anonymous key |
-| `basetenUrl` | Yes | Baseten API URL |
-| `basetenApiKey` | Yes | Baseten API key |
-| `apiBaseUrl` | No | Wispr API URL (default: `https://api.wisprflow.ai`) |
-| `clientVersion` | No | Client version to report (default: `1.4.154`) |
 | `timeout` | No | Request timeout in ms (default: `30000`) |
 | `debug` | No | Enable debug logging (default: `false`) |
 | `tokenRefreshBuffer` | No | Seconds before expiry to refresh token (default: `60`) |
@@ -245,10 +226,6 @@ See the [examples](./examples) directory for complete usage examples:
 # Set environment variables (for examples only)
 export WISPR_EMAIL="your-email"
 export WISPR_PASSWORD="your-password"
-export SUPABASE_URL="https://xxx.supabase.co"
-export SUPABASE_ANON_KEY="your-anon-key"
-export BASETEN_URL="https://xxx.api.baseten.co"
-export BASETEN_API_KEY="your-baseten-key"
 
 # Run examples
 bun run examples/01-basic-auth.ts
@@ -271,22 +248,22 @@ bun run examples/03-transcribe-file.ts path/to/audio.wav
 
 ### WisprAuth (Advanced Usage)
 
-For advanced use cases, you can use `WisprAuth` directly:
+For advanced use cases where you need direct control over authentication, you can use `WisprAuth` directly. Note: Infrastructure values are now built into the SDK.
 
 ```typescript
-import { WisprAuth, WisprClient } from 'wispr-flow-sdk-unofficial';
+import { WisprAuth, WisprClient, WISPR_INFRASTRUCTURE } from 'wispr-flow-sdk-unofficial';
 
 const auth = new WisprAuth({
-  supabaseUrl: 'https://xxx.supabase.co',
-  supabaseAnonKey: 'your-anon-key',
+  supabaseUrl: WISPR_INFRASTRUCTURE.SUPABASE_URL,
+  supabaseAnonKey: WISPR_INFRASTRUCTURE.SUPABASE_ANON_KEY,
 });
 
 await auth.signIn({ email: 'user@example.com', password: 'password' });
 
 const client = new WisprClient({
   auth,
-  basetenUrl: 'https://xxx.api.baseten.co',
-  basetenApiKey: 'your-baseten-key',
+  basetenUrl: WISPR_INFRASTRUCTURE.BASETEN_URL,
+  basetenApiKey: WISPR_INFRASTRUCTURE.BASETEN_API_KEY,
 });
 ```
 
@@ -311,6 +288,12 @@ bun run typecheck
 
 # Build
 bun run build
+
+# Run tests (unit tests only)
+bun test
+
+# Run tests with integration tests (requires credentials)
+WISPR_EMAIL="your-email" WISPR_PASSWORD="your-password" bun test
 
 # Run examples
 bun run examples/01-basic-auth.ts

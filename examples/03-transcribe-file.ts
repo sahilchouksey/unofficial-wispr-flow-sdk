@@ -22,20 +22,16 @@
 import { readFile } from 'node:fs/promises';
 import { WisprClient, toBase64 } from '../src';
 
-function getConfig() {
+function getCredentials() {
   const email = process.env.WISPR_EMAIL;
   const password = process.env.WISPR_PASSWORD;
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-  const basetenUrl = process.env.BASETEN_URL;
-  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
-    console.error('Error: Please set required environment variables');
+  if (!email || !password) {
+    console.error('Error: Please set WISPR_EMAIL and WISPR_PASSWORD');
     process.exit(1);
   }
 
-  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
+  return { email, password };
 }
 
 async function main() {
@@ -50,7 +46,7 @@ async function main() {
     process.exit(1);
   }
 
-  const config = getConfig();
+  const { email, password } = getCredentials();
 
   console.log('='.repeat(50));
   console.log('Wispr Flow SDK - Transcribe Audio File');
@@ -78,12 +74,8 @@ async function main() {
   console.log('');
   console.log('3. Creating client...');
   const client = await WisprClient.create({
-    email: config.email,
-    password: config.password,
-    supabaseUrl: config.supabaseUrl,
-    supabaseAnonKey: config.supabaseAnonKey,
-    basetenUrl: config.basetenUrl,
-    basetenApiKey: config.basetenApiKey,
+    email,
+    password,
   });
   console.log('   Client created!');
 
@@ -111,7 +103,7 @@ async function main() {
   console.log('TRANSCRIPTION RESULT');
   console.log('='.repeat(50));
   console.log('');
-  console.log('Text:', result.pipeline_text || '(no text detected)');
+  console.log('Text:', result.llm_text || result.asr_text || '(no text detected)');
   console.log('');
   console.log('Stats:');
   console.log('  - Status:', result.status);

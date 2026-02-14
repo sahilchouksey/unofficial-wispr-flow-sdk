@@ -9,32 +9,28 @@
  */
 
 import {
-  WisprClient,
-  WisprAuthError,
   WisprApiError,
-  WisprValidationError,
-  WisprTimeoutError,
+  WisprAuthError,
+  WisprClient,
   WisprError,
+  WisprTimeoutError,
+  WisprValidationError,
 } from '../src';
 
-function getConfig() {
+function getCredentials() {
   const email = process.env.WISPR_EMAIL;
   const password = process.env.WISPR_PASSWORD;
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-  const basetenUrl = process.env.BASETEN_URL;
-  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
-    console.error('Error: Please set required environment variables');
+  if (!email || !password) {
+    console.error('Error: Please set WISPR_EMAIL and WISPR_PASSWORD');
     process.exit(1);
   }
 
-  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
+  return { email, password };
 }
 
 async function main() {
-  const config = getConfig();
+  const { email, password } = getCredentials();
 
   console.log('='.repeat(50));
   console.log('Wispr Flow SDK - Error Handling Example');
@@ -51,12 +47,8 @@ async function main() {
   console.log('   a) Wrong password:');
   try {
     await WisprClient.create({
-      email: config.email,
+      email,
       password: 'wrong-password',
-      supabaseUrl: config.supabaseUrl,
-      supabaseAnonKey: config.supabaseAnonKey,
-      basetenUrl: config.basetenUrl,
-      basetenApiKey: config.basetenApiKey,
     });
   } catch (error) {
     if (error instanceof WisprAuthError) {
@@ -73,15 +65,11 @@ async function main() {
   console.log('');
 
   // Try creating client without required fields
-  console.log('   a) Missing required config:');
+  console.log('   a) Missing email:');
   try {
     await WisprClient.create({
-      email: config.email,
-      password: config.password,
-      supabaseUrl: config.supabaseUrl,
-      supabaseAnonKey: config.supabaseAnonKey,
-      basetenUrl: '', // Missing!
-      basetenApiKey: config.basetenApiKey,
+      email: '', // Missing!
+      password,
     });
   } catch (error) {
     if (error instanceof WisprValidationError) {
@@ -99,14 +87,10 @@ async function main() {
   let client: WisprClient | null = null;
 
   try {
-    // Create client with all config
+    // Create client - just email and password needed!
     client = await WisprClient.create({
-      email: config.email,
-      password: config.password,
-      supabaseUrl: config.supabaseUrl,
-      supabaseAnonKey: config.supabaseAnonKey,
-      basetenUrl: config.basetenUrl,
-      basetenApiKey: config.basetenApiKey,
+      email,
+      password,
     });
     console.log('   Client created successfully!');
 

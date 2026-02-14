@@ -2,36 +2,29 @@
  * Example 01: Basic Authentication
  *
  * This example demonstrates how to:
- * 1. Create a WisprClient with all config in one place
+ * 1. Create a WisprClient with just email and password
  * 2. Warmup the transcription service
  *
  * Usage:
  *   bun run examples/01-basic-auth.ts
  *
- * Required: Set environment variables or pass directly to the SDK
+ * Required: Set WISPR_EMAIL and WISPR_PASSWORD environment variables
  */
 
 import { WisprClient } from '../src';
 
-// Get configuration from environment (for this example)
-// In production, you can pass these values directly
-function getConfig() {
+// Get credentials from environment
+function getCredentials() {
   const email = process.env.WISPR_EMAIL;
   const password = process.env.WISPR_PASSWORD;
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-  const basetenUrl = process.env.BASETEN_URL;
-  const basetenApiKey = process.env.BASETEN_API_KEY;
 
-  if (!email || !password || !supabaseUrl || !supabaseAnonKey || !basetenUrl || !basetenApiKey) {
+  if (!email || !password) {
     console.error('Error: Please set required environment variables:');
     console.error('  WISPR_EMAIL, WISPR_PASSWORD');
-    console.error('  SUPABASE_URL, SUPABASE_ANON_KEY');
-    console.error('  BASETEN_URL, BASETEN_API_KEY');
     process.exit(1);
   }
 
-  return { email, password, supabaseUrl, supabaseAnonKey, basetenUrl, basetenApiKey };
+  return { email, password };
 }
 
 async function main() {
@@ -40,17 +33,13 @@ async function main() {
   console.log('='.repeat(50));
   console.log('');
 
-  const config = getConfig();
+  const { email, password } = getCredentials();
 
-  // Step 1: Create client with all config in one place
-  console.log('1. Creating WisprClient with unified config...');
+  // Step 1: Create client with just email and password!
+  console.log('1. Creating WisprClient...');
   const client = await WisprClient.create({
-    email: config.email,
-    password: config.password,
-    supabaseUrl: config.supabaseUrl,
-    supabaseAnonKey: config.supabaseAnonKey,
-    basetenUrl: config.basetenUrl,
-    basetenApiKey: config.basetenApiKey,
+    email,
+    password,
     debug: true,
   });
   console.log('   Client created and authenticated successfully!');

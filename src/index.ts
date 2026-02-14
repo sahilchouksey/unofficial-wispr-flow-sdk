@@ -1,20 +1,16 @@
 /**
  * Wispr Flow SDK - Unofficial TypeScript SDK for Wispr Flow voice-to-text API
  *
- * All configuration must be passed explicitly - no environment variables are read.
+ * Simple to use - just provide your email and password!
  *
  * @example
  * ```typescript
  * import { WisprClient } from 'wispr-flow-sdk';
  *
- * // Create client with all config in one place
+ * // Create client with just email and password!
  * const client = await WisprClient.create({
  *   email: 'user@example.com',
  *   password: 'password123',
- *   supabaseUrl: 'https://xxx.supabase.co',
- *   supabaseAnonKey: 'your-anon-key',
- *   basetenUrl: 'https://xxx.api.baseten.co',
- *   basetenApiKey: 'your-baseten-key',
  * });
  *
  * // Warmup the service (reduces latency)
@@ -55,6 +51,7 @@ export {
   DEFAULT_TIMEOUT_MS,
   ENDPOINTS,
   SUPPORTED_LANGUAGES,
+  WISPR_INFRASTRUCTURE,
   type SupportedLanguage,
 } from './core/constants';
 

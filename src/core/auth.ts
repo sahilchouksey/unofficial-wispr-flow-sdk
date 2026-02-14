@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod';
-import { WisprAuthError, WisprApiError } from '../types';
+import { WisprApiError, WisprAuthError } from '../types';
 import { DEFAULT_API_BASE_URL } from './constants';
 
 // ============================================================================
@@ -282,13 +282,14 @@ export class WisprAuth {
   }
 
   /**
-   * Sign in with email and password (uses Supabase by default)
+   * Sign in with email and password (uses Wispr API by default)
    *
    * @param credentials - Email and password
    * @returns Authentication session
    */
   async signIn(credentials: AuthCredentials): Promise<AuthSession> {
-    return this.signInWithSupabase(credentials);
+    // Use Wispr API by default as it's more reliable
+    return this.signInWithWisprApi(credentials);
   }
 
   /**
