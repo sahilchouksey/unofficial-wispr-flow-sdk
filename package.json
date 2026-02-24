@@ -1,6 +1,6 @@
 {
   "name": "wispr-flow-sdk-unofficial",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Unofficial TypeScript SDK for Wispr Flow voice-to-text API. Not affiliated with Wispr Inc.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,9 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
